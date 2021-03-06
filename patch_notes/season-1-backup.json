@@ -1,0 +1,44 @@
+{
+    "Season": "Season 1",
+    "Date": "1st January 2021",
+    "Content": {
+        "Server": [
+            {
+                "Placement matches": "Added a period of 10 placement matches before players receive their first rank."
+            },
+            {
+                "Added anonymous challenges": "Updated @1v1 to be anonymous and make them used more often. No more dodging Nekrosu :)"
+            },
+            {
+                "Added cancel button": "If both players agree to cancel a match, they can use the cancel button to close a room with no ELO adjustment"
+            },
+            {
+                "Removed NA-West": "SA, AP and OCE regions *F*"
+            }
+        ],
+        "ELO & Ranks": [
+            {
+                "Added .rank command for users": "Players can use the .rank command to see their elo and rank stats on a player card"
+            },
+            {
+                "Adjusted streak bonus": "Maximum streak bonus reduced to 5 ELO"
+            }
+        ],
+        "Quality of Life": [
+            {
+                "Updated #rules": "Messages in #rules were updated making them easier for players to understand"
+            }
+        ],
+        "Admin": [
+            {
+                "Added .show_user command": "The .show_user command allows admins to quickly view a players full information"
+            },
+            {
+                "Added .add_elo & .remove_elo commands": "The add and remove elo commands allow admins to more easily undo invalid games"
+            },
+            {
+                "Added .judge command": "The .judge command allows admins to automatically judge a games outcome"
+            }
+        ]
+    }
+}

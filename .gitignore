@@ -1,0 +1,16 @@
+package-lock.json
+*node_modules/
+.idea/
+*build/
+precache-manifest*
+private.key
+public.crt
+secrets.json
+service-worker.js
+nohup.out
+*.png
+*.html
+*.ico
+*manifest.json
+.htaccess
+*static/

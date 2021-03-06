@@ -16,8 +16,6 @@ const CLIENT_ID = '779767593418227735';
 const CLIENT_SECRET = secrets.client;
 const REDIRECT_URI = 'https://darwin1v1league.com/login';
 const DEV_REDIRECT_URI = 'http://localhost:3000/login';
-const SESS_SECRET = secrets.session
-const ONE_WEEK = 7 * 24 * 60 * 60 * 1000
 
 const DatabaseOptions = {
     host: 'localhost',
@@ -32,23 +30,8 @@ const ServerOptions = {
 };
 
 const connection = mysql.createConnection(DatabaseOptions);
-const sessionStore = new MySQLStore(DatabaseOptions)
 
 app.use(cors());
-app.use(session({
-    secret: SESS_SECRET,
-    name: '1v1league.sid',
-    saveUninitialized: false,
-    resave: false,
-    store: sessionStore,
-    cookie: {
-        path: '/',
-        httpOnly: false,
-        maxAge: ONE_WEEK,
-        secure: true,
-        // domain: 'http://localhost:3000'
-    }
-}))
 
 https.createServer(ServerOptions, app).listen(PORT, function () {
     console.log("Express server listening on port " + PORT);
@@ -173,7 +156,7 @@ app.get('/login/:code', async function (req, res) {
     }
 })
 
-app.get('/games/:user_id', async function (req, res) {
+app.get('/games/:user_id', function (req, res) {
     connection.query(GET_GAMES(req.params.user_id), (err, results) => {
         if (err) {
             return res.status(500).send(err)
@@ -181,4 +164,13 @@ app.get('/games/:user_id', async function (req, res) {
             return res.json(results)
         }
     })
+})
+
+app.get('/patches/:season', function (req, res) {
+    try {
+        results = fs.readFileSync('./patch_notes/' + req.params.season + '.json', 'utf8')
+        return res.send(results)
+    } catch (err) {
+        return res.status(500).send(err)
+    }
 })
