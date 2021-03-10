@@ -1,0 +1,46 @@
+{
+    "Date": "4th March 2021",
+    "Content": {
+        "Server": [
+            {
+                "Added Active Role": "As an easier way to find people currently playing, players are now given an active role for 20 minutes after opening a room."
+            },
+            {
+                "Added .qual (Qualified) Command": "Players can now use .qual to check the current top 8 players for their region and platform."
+            },
+            {
+                "Added New Win/Loss/Cancel Emojis": "Updated the win/loss/cancel result reactions to make them easier for players to understand."
+            },
+            {
+                "Updated Room Messages": "The room messages sent upon entering a match room have now been rewritten, making them easier to understand."
+            }
+        ],
+        "Website": [
+            {
+                "Leaderboard Filtering": "Added regional filters to the leaderboards so players can filter by region and platform."
+            },
+            {
+                "Fixed Missing Profile Pictures": "Previously if a player left the server and changed their profile picture before joining back it wouldn't be updated in the database and the leaderboards would display a missing image link. This has now been fixed to updated avatars on players rejoining the server."
+            },
+            {
+                "Added Patch Notes Pages": "Added these patch notes pages for each season."
+            }
+        ],
+        "ELO & Ranks": [
+            {
+                "Adjusted Placement Games": "A players final standings from season 2 will now affect their placement games."
+            },
+            {
+                "Removed Iron Rank": "The lowest ranked players in season 2 were steel rank. Now someone will be able to reach the blessed inmate role :D"
+            },
+            {
+                "Adjusted Streak Bonus": "Players can now only gain a streak bonus when playing against someone who is one rank below or above them."
+            }
+        ],
+        "Admin": [
+            {
+                "Added Mass Revert Function": "Previously the revert function only allowed for reverting one game at a time. It's now been updated to revert from multiple game id's or by certain parameters."
+            }
+        ]
+    }
+}

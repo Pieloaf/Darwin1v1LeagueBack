@@ -1,0 +1,47 @@
+{
+    "Date": "3rd February 2021",
+    "Content": {
+        "Server": [
+            {
+                "Season Finals on All Platforms": "Added season finals tournament for Xbox and PS4."
+            },
+            {
+                "Added .rules Command": "Players can now use .rules for a suggested rule set. These were based on what seemed to be the most common agreed rules of season 1, so just to make that quicker to communicate. Remember these are only suggested rules so if you want to play anything differently make sure to confirm with your opponent in your room."
+            },
+            {
+                "Added .flip Command": "Players can now use .flip as a coin flip command. Can't agree on the server region or a rule set? Let RNG decide for you!"
+            },
+            {
+                "Updated .rank Command": "The .rank command now displays both regional and global ranks of a player. It now also shows how many games are left to be played if a user has not yet received their first rank."
+            }
+        ],
+        "ELO & Ranks": [
+            {
+                "Adjusted Placement Games": "Placement games should place players in their first rank more accurately than before."
+            },
+            {
+                "Limited Matches vs Same Player": "Players can now only receive or lose ELO for up to 5 games against the same player per day."
+            },
+            {
+                "Adjusted Streak Bonus": "Players can now only gain a streak bonus when playing against someone in the same rank or higher."
+            }
+        ],
+        "Admin": [
+            {
+                "Added Games to Database": "Previously only a players current stats were recorded, now there is a database table with a record of all games played."
+            },
+            {
+                "Added .revert Command": "The .revert command now allows admins to more easily undo invalid games."
+            },
+            {
+                "Removed .add_elo & .remove_elo Commands": "The add and remove elo commands were removed in place of the new .revert command."
+            },
+            {
+                "Added .judge Command": "The .judge command allows admins to automatically judge a games outcome."
+            },
+            {
+                "Super Secret Admin Stuffs": "Added some new features to help admins monitor games being played."
+            }
+        ]
+    }
+}

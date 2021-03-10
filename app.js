@@ -4,18 +4,20 @@ const cors = require('cors');
 const app = express();
 const fs = require('fs');
 const https = require('https');
-const session = require('express-session');
-const MySQLStore = require('express-mysql-session')(session);
 const axios = require('axios');
 const queryString = require('query-string');
-const secrets = require('./secrets.json')
+const secrets = require('./secrets.json');
+const { json } = require('express');
 
 const PORT = 100;
 const API_ENDPOINT = 'https://discord.com/api/v8';
 const CLIENT_ID = '779767593418227735';
 const CLIENT_SECRET = secrets.client;
+const BOT_TOKEN = secrets.bot_token;
+const GUILD_ID = 779485288996012052;
 const REDIRECT_URI = 'https://darwin1v1league.com/login';
 const DEV_REDIRECT_URI = 'http://localhost:3000/login';
+const PLAYER_DATA = "user_name,avatar_url,platform,region,elo,victory,defeat,streak,max_streak,user_id"
 
 const DatabaseOptions = {
     host: 'localhost',
@@ -23,7 +25,26 @@ const DatabaseOptions = {
     password: 'Darwin1vs1%',
     database: 'darwin1v1league'
 };
-
+const classes = {
+    '804735908867604561': 'grapple',
+    '804735963707736115': 'headhunter',
+    '804735679664881734': 'jetwings'
+};
+const supporters = {
+    817095627489148939: 'pink',
+    808322922825252894: 'black',
+    808322708211105833: 'white',
+    806362351430533170: 'purple',
+    806308621347848252: 'green',
+    806362718990368769: 'blue',
+    806365765619941396: 'red',
+    806363058595168308: 'yellow'
+};
+const special_roles = {
+    788288519888961536: 'booster',
+    808331218915033149: 'supporter',
+    792081294301200435: 'champion'
+};
 const ServerOptions = {
     key: fs.readFileSync('./private.key', 'utf8'),
     cert: fs.readFileSync('./public.crt', 'utf8'),
@@ -42,7 +63,6 @@ connection.connect(function (err) {
     console.log("Connected!");
 });
 
-const PLAYER_DATA = "user_name,avatar_url,platform,region,elo,victory,defeat,streak"
 
 function SELECT_PLAYERS(platform, region) {
 
@@ -67,18 +87,18 @@ function SELECT_PLAYERS(platform, region) {
         }
     }
 }
+
 function GET_USER(user) {
     if (user) {
-        return `select * from (select @g:=@g+1 as q_rank,g_rank,user_id,${PLAYER_DATA} from (select * from (select @r:=@r+1 as g_rank,user_id,${PLAYER_DATA} from players,(select @r:=0) as r order by (victory+defeat >= 10) desc, elo desc) as grank) as qrank,(select @g:=0) as g where platform = (select platform from players where user_id = ${user}) and region = (select region from players where user_id = ${user}) order by (victory+defeat >= 10) desc, elo desc) as stats where user_id = ${user}`
+        return `select * from (select @g:=@g+1 as q_rank,g_rank,${PLAYER_DATA} from (select * from (select @r:=@r+1 as g_rank,${PLAYER_DATA} from players,(select @r:=0) as r order by (victory+defeat >= 10) desc, elo desc) as grank) as qrank,(select @g:=0) as g where platform = (select platform from players where user_id = ${user}) and region = (select region from players where user_id = ${user}) order by (victory+defeat >= 10) desc, elo desc) as stats where user_id = ${user}`
     }
 }
 
 function GET_GAMES(user) {
-    return `SELECT ROW_NUMBER() OVER(ORDER BY timestamp ASC) AS num_row, user_name AS loser, winner, elo_gain, elo_loss, timestamp FROM (SELECT user_name AS winner, loser, elo_gain, elo_loss, timestamp FROM (SELECT winner, elo_gain, loser, elo_loss, timestamp FROM games g WHERE g.loser = ${user} OR g.winner = ${user}) AS games LEFT JOIN players p ON games.winner = p.user_id) AS games LEFT JOIN players p ON games.loser = p.user_id ORDER BY timestamp DESC;`
+    return `SELECT ROW_NUMBER() OVER(ORDER BY timestamp ASC) AS num_row, user_name AS loser, winner, elo_gain, elo_loss, timestamp, winner_id FROM (SELECT user_name AS winner, loser, elo_gain, elo_loss, timestamp, winner_id FROM (SELECT winner, elo_gain, loser, elo_loss, timestamp, g.winner as winner_id FROM games g WHERE g.loser = ${user} OR g.winner = ${user}) AS games LEFT JOIN players p ON games.winner = p.user_id) AS games LEFT JOIN players p ON games.loser = p.user_id ORDER BY timestamp DESC;`
 }
 
 async function exchange_code(grant_code) {
-    console.log('grant', grant_code)
     let reqData = queryString.stringify({
         client_id: CLIENT_ID,
         client_secret: CLIENT_SECRET,
@@ -104,6 +124,16 @@ async function get_discord_user(access_token) {
         },
     }
     return await axios.get(`${API_ENDPOINT}/users/@me`, config)
+}
+
+async function get_roles(user_id) {
+    let config = {
+        headers: {
+            'Authorization': `Bot ${BOT_TOKEN}`,
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+    }
+    return await axios.get(`${API_ENDPOINT}/guilds/779485288996012052/members/${user_id}`, config)
 }
 
 app.get('/leaderboard', function (req, res) {
@@ -136,20 +166,32 @@ app.get('/leaderboard/:platform/:region', function (req, res) {
     })
 })
 
-app.get('/user/:user_id', function (req, res) {
+app.get('/user/:user_id', async function (req, res) {
+    let player_classes = []
+    try {
+        let player_roles = await get_roles(req.params.user_id)
+        player_roles.data.roles.forEach(role => {
+            if (role in classes) player_classes.push(classes[role])
+        })
+    }
+    catch (err) {
+
+    }
     connection.query(GET_USER(req.params.user_id), (err, results) => {
         if (err) {
             return res.status(500).send(err)
         } else {
+            results.push({ 'player_classes': player_classes })
             return res.json(results)
         }
     })
+
 })
 
 app.get('/login/:code', async function (req, res) {
     try {
-        // const results = await exchange_code(req.params.code)
-        const user = await get_discord_user(await exchange_code(req.params.code).data.access_token)
+        const results = await exchange_code(req.params.code)
+        const user = await get_discord_user(results.data.access_token)
         return res.json(user.data.id);
     } catch (err) {
         console.log(err)
