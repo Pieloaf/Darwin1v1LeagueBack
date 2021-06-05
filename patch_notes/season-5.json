@@ -1,0 +1,28 @@
+{
+    "Date": "10th May 2021",
+    "Content": {
+        "Server": [
+            {
+                "Room Images": "Rooms now have a fancy new VS image thanks to Dreez"
+            },
+            {
+                "500 Games Minimum": "Due to low activity last season we will not be hosting another end of season tournament for the foreseeable future. However if a given platform has 500 games played we will consider hosting a tournament for woodskin."
+            }
+        ],
+        "Website": [
+            {
+                "Previous Season Stats(coming soon)": "This is going to be the last big change for a while, but going to add a select to view previous season leaderboards and player stats."
+            }
+        ],
+        "ELO & Ranks": [
+            {
+                "Removed Placement Games": "There are no longer placement games "
+            }
+        ],
+        "Admin": [
+            {
+                "Leaderboard Reset Update": "Leaderboard reset command updated to make admin life easier"
+            }
+        ]
+    }
+}

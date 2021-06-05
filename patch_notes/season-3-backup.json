@@ -1,6 +1,11 @@
 {
     "Date": "4th March 2021",
     "Content": {
+        "Big Ass Update": [
+            {
+                "Added Profile Pages to the Website": "Wooooooah this like the biggest update ever, there are now profile pages on the website. You can view anyone's profile from the leaderboards or sign in through discord to view your own :D Hopefully some more to come soon :))"
+            }
+        ],
         "Server": [
             {
                 "Added Active Role": "As an easier way to find people currently playing, players are now given an active role for 20 minutes after opening a room."
@@ -16,9 +21,6 @@
             }
         ],
         "Website": [
-            {
-                "Profile Pages": "Profile Pages have now been added to the site. Any profile is viewable from the leaderboards and players can view their own profile by signing in with discord."
-            },
             {
                 "Leaderboard Filtering": "Added regional filters to the leaderboards so players can filter by region and platform."
             },
