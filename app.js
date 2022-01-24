@@ -6,28 +6,24 @@ const fs = require('fs');
 const https = require('https');
 const axios = require('axios');
 const queryString = require('query-string');
-const secrets = require('./secrets.json');
 const session = require('express-session');
 const MySQLStore = require('express-mysql-session')(session);
 
-const PORT = 100;
+require('dotenv').config();
+
+const PORT = 8080;
 const API_ENDPOINT = 'https://discord.com/api/v8';
 const CLIENT_ID = '779767593418227735';
-const CLIENT_SECRET = secrets.client;
-const BOT_TOKEN = secrets.bot_token;
+const CLIENT_SECRET = process.env.CLIENT;
+const BOT_TOKEN = process.env.BOT_TOKEN;
 const GUILD_ID = '779485288996012052';
-const REDIRECT_URI = 'https://darwin1v1league.com/login';
+const REDIRECT_URI = 'https://1v1league.pieloaf.com/login';
 const DEV_REDIRECT_URI = 'http://localhost:3000/login';
-const SESS_SECRET = secrets.session
+const SESS_SECRET = process.env.SESSION;
 const ONE_WEEK = 7 * 24 * 60 * 60 * 1000
 const PLAYER_DATA = "user_name,avatar_url,platform,region,elo,victory,defeat,streak,max_streak,user_id"
+const PLAYER_DATA_OLD = "user_name,avatar_url,platform,region,elo,victory,defeat,streak,user_id"
 
-const DatabaseOptions = {
-    host: 'localhost',
-    user: 'root',
-    password: 'Darwin1vs1%',
-    database: 'darwin1v1league'
-};
 const classes = {
     '804735908867604561': 'grapple',
     '804735963707736115': 'headhunter',
@@ -49,20 +45,25 @@ const achievements = {
     '792081194031513627': 'winner'
 };
 const ServerOptions = {
-    key: fs.readFileSync('./private.key', 'utf8'),
-    cert: fs.readFileSync('./public.crt', 'utf8'),
+    key: fs.readFileSync('/etc/letsencrypt/live/pieloaf.com/privkey.pem', 'utf8'),
+    cert: fs.readFileSync('/etc/letsencrypt/live/pieloaf.com/fullchain.pem', 'utf8'),
 };
 
 const pool = mysql.createPool({
     host: 'localhost',
-    user: 'root',
-    password: 'Darwin1vs1%',
+    user: process.env.DB_USER,
+    password: process.env.DB_PASS,
     database: 'darwin1v1league',
     debug: false,
     connectionLimitL: 100
 });
 // const connection = mysql.createConnection(DatabaseOptions);
-const sessionStore = new MySQLStore(DatabaseOptions)
+const sessionStore = new MySQLStore({
+    host: 'localhost',
+    user: process.env.DB_USER,
+    password: process.env.DB_PASS,
+    database: 'darwin1v1league',
+})
 app.enable('trust proxy');
 app.use(cors());
 
@@ -93,38 +94,42 @@ server.on('error', (err) => { console.log(err) })
 
 
 
-function SELECT_PLAYERS(platform, region) {
-
+function SELECT_PLAYERS(platform, region, season) {
+    let playerData = !season || season > 2 ? PLAYER_DATA : PLAYER_DATA_OLD;
+    season = season ? `_s${season}` : '';
     if (platform == 'global' || !platform) {
         if (region) {
-            return `select @r:=@r+1 as ranking,${PLAYER_DATA}\n` +
-                `from players,(select @r:=0) as r where region = "${region}" and victory+defeat >= 1 order by elo desc, (victory/(victory+defeat)) desc`
+            return `select @r:=@r+1 as ranking,${playerData}\n` +
+                `from players${season},(select @r:=0) as r where region = "${region}" and victory+defeat >= 1 order by elo desc, (victory/(victory+defeat)) desc`
         }
         else {
-            return `select @r:=@r+1 as ranking,${PLAYER_DATA}\n` +
-                `from players,(select @r:=0) as r where victory+defeat >= 1 order by elo desc, (victory/(victory+defeat)) desc`
+            return `select @r:=@r+1 as ranking,${playerData}\n` +
+                `from players${season},(select @r:=0) as r where victory+defeat >= 1 order by elo desc, (victory/(victory+defeat)) desc`
         }
     }
     else {
         if (region) {
-            return `select @r:=@r+1 as ranking,${PLAYER_DATA}\n` +
-                `from players,(select @r:=0) as r where platform = "${platform}" and region = "${region}" and victory+defeat >= 1 order by elo desc, (victory/(victory+defeat)) desc`
+            return `select @r:=@r+1 as ranking,${playerData}\n` +
+                `from players${season},(select @r:=0) as r where platform = "${platform}" and region = "${region}" and victory+defeat >= 1 order by elo desc, (victory/(victory+defeat)) desc`
         }
         else {
-            return `select @r:=@r+1 as ranking,${PLAYER_DATA}\n` +
-                `from players,(select @r:=0) as r where platform = "${platform}" and victory+defeat >= 1 order by elo desc, (victory/(victory+defeat)) desc`
+            return `select @r:=@r+1 as ranking,${playerData}\n` +
+                `from players${season},(select @r:=0) as r where platform = "${platform}" and victory+defeat >= 1 order by elo desc, (victory/(victory+defeat)) desc`
         }
     }
 }
 
-function GET_USER(user) {
+function GET_USER(user, season) {
+    let playerData = !season || season > 2 ? PLAYER_DATA : PLAYER_DATA_OLD;
+    season = season ? `_s${season}` : '';
     if (user) {
-        return `select * from (select @g:=@g+1 as q_rank,g_rank,${PLAYER_DATA} from (select * from (select @r:=@r+1 as g_rank,${PLAYER_DATA} from players,(select @r:=0) as r order by (victory+defeat >= 1) desc, elo desc) as grank) as qrank,(select @g:=0) as g where platform = (select platform from players where user_id = ${user}) and region = (select region from players where user_id = ${user}) order by (victory+defeat >= 1) desc, elo desc) as stats where user_id = ${user}`
+        return `select * from (select @g:=@g+1 as q_rank,g_rank,${playerData} from (select * from (select @r:=@r+1 as g_rank,${playerData} from players${season},(select @r:=0) as r order by (victory+defeat >= 1) desc, elo desc) as grank) as qrank,(select @g:=0) as g where platform = (select platform from players${season} where user_id = ${user}) and region = (select region from players${season} where user_id = ${user}) order by (victory+defeat >= 1) desc, elo desc) as stats where user_id = ${user}`
     }
 }
 
-function GET_GAMES(user) {
-    return `SELECT ROW_NUMBER() OVER(ORDER BY timestamp ASC) AS num_row, user_name AS loser, winner, elo_gain, elo_loss, timestamp, winner_id, loser_id FROM (SELECT user_name AS winner, loser, elo_gain, elo_loss, timestamp, winner_id, loser_id FROM (SELECT winner, elo_gain, loser, elo_loss, timestamp, g.winner as winner_id, g.loser as loser_id FROM games g WHERE g.loser = ${user} OR g.winner = ${user}) AS games LEFT JOIN players p ON games.winner = p.user_id) AS games LEFT JOIN players p ON games.loser = p.user_id ORDER BY timestamp DESC;`
+function GET_GAMES(user, season) {
+    season = season ? `_s${season}` : '';
+    return `SELECT ROW_NUMBER() OVER(ORDER BY timestamp ASC) AS num_row, user_name AS loser, winner, elo_gain, elo_loss, timestamp, winner_id, loser_id FROM (SELECT user_name AS winner, loser, elo_gain, elo_loss, timestamp, winner_id, loser_id FROM (SELECT winner, elo_gain, loser, elo_loss, timestamp, g.winner as winner_id, g.loser as loser_id FROM games${season} g WHERE g.loser = ${user} OR g.winner = ${user}) AS games LEFT JOIN players p ON games.winner = p.user_id) AS games LEFT JOIN players p ON games.loser = p.user_id ORDER BY timestamp DESC;`
 }
 
 async function exchange_code(grant_code) {
@@ -175,8 +180,15 @@ app.use(function (req, res, next) {
     next();
 });
 app.get('/', function (req, res) {
-    return res.type('json').send(
-        "Heyo, welcome to the backend :P\n\nHere\'s a list of end points you can use :)\t\n/leaderboard\t\n/leaderboard/:platform\t\n/leaderboard/:platform/:region\t\n/user/:user_id\t\n/games/:user_id\t\n/patches/:season", null, '\n');
+    return res.type('txt').send(
+        `Heyo, welcome to the backend :P
+        
+Here's a list of end points you can use :)
+/leaderboard
+/leaderboard/:platform
+/leaderboard/:platform/:region
+/user?user_id={user_id}&season={season number}
+/patches/:season`);
 })
 
 app.get('/leaderboard', function (req, res) {
@@ -214,7 +226,8 @@ app.get('/leaderboard/:platform/:region', function (req, res) {
 app.get('/user', async function (req, res) {
     let player_classes = []
     let player_achievements = []
-    let user = req.session.user_id
+    let user = req.query.user_id ? req.query.user_id : req.session.user_id
+    let season = req.query.season
     try {
         let player_roles = await get_roles(user)
         player_roles.data.roles.forEach(role => {
@@ -222,58 +235,37 @@ app.get('/user', async function (req, res) {
             else if (role in achievements) player_achievements.push(achievements[role])
         })
     }
-    catch (err) {
+    catch (err) { /* pass */ }
 
-    }
-    pool.query(GET_USER(user), (err, results) => {
+    pool.query(GET_USER(user, season), (err, results) => {
         if (err) {
             if (err.errno === 1054) {
                 return res.json([])
             } else if (err.errno === 1065) {
                 return res.json([])
             }
+
             return res.status(500).send(err)
         } else {
-            results.push({ 'classes': player_classes })
-            results.push({ 'achievements': player_achievements })
-            return res.json(results)
-        }
-    })
-
-})
-
-
-app.get('/user/:user_id', async function (req, res) {
-    let player_classes = []
-    let player_achievements = []
-    let user = req.params.user_id
-    try {
-        let player_roles = await get_roles(user)
-        player_roles.data.roles.forEach(role => {
-            if (role in classes) player_classes.push(classes[role])
-            else if (role in achievements) player_achievements.push(achievements[role])
-        })
-    }
-    catch (err) {
-
-    }
-    pool.query(GET_USER(user), (err, results) => {
-        if (err) {
-            if (err.errno === 1054) {
-                return res.json([])
-            } else if (err.errno === 1065) {
+            if (results.length === 0) {
                 return res.json([])
             }
-            return res.status(500).send(err)
-        } else {
-            results.push({ 'classes': player_classes })
-            results.push({ 'achievements': player_achievements })
-            return res.json(results)
+            results[0]['classes'] = player_classes
+            results[0]['achievements'] = player_achievements
+            pool.query(GET_GAMES(user, season), (err, games) => {
+                if (err) {
+                    results.push([])
+                    return res.json(results)
+                } else {
+                    games.push(games[0]);
+                    results.push(games)
+                    return res.json(results)
+                }
+            })
         }
     })
 
 })
-
 
 app.get('/login/:code', async function (req, res) {
     try {
@@ -286,44 +278,10 @@ app.get('/login/:code', async function (req, res) {
     }
 })
 
-app.get('/games', function (req, res) {
-    let user = req.session.user_id
-    pool.query(GET_GAMES(`${user}`), (err, results) => {
-        if (err) {
-            if (err.errno === 1054) {
-                return res.json([])
-            } else if (err.errno === 1065) {
-                return res.json([])
-            }
-            return res.status(500).send(err)
-        } else {
-            results.push({ 'user_id': user })
-            return res.json(results)
-        }
-    })
-})
-
-app.get('/games/:user_id', function (req, res) {
-    let user = req.params.user_id
-    pool.query(GET_GAMES(`${user}`), (err, results) => {
-        if (err) {
-            if (err.errno === 1054) {
-                return res.json([])
-            } else if (err.errno === 1065) {
-                return res.json([])
-            }
-            return res.status(500).send(err)
-        } else {
-            results.push({ 'user_id': user })
-            return res.json(results)
-        }
-    })
-})
-
 app.get('/patches/:season', function (req, res) {
     try {
         results = fs.readFileSync('./patch_notes/' + req.params.season + '.json', 'utf8')
-        return res.send(results)
+        return res.json(JSON.parse(results))
     } catch (err) {
         return res.status(500).send(err)
     }

@@ -15,3 +15,4 @@ nohup.out
 .htaccess
 *static/
 screenlog*
+.env
