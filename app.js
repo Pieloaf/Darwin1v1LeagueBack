@@ -53,7 +53,7 @@ const pool = mysql.createPool({
     host: 'localhost',
     user: process.env.DB_USER,
     password: process.env.DB_PASS,
-    database: 'darwin1v1league',
+    database: '1v1league',
     debug: false,
     connectionLimitL: 100
 });
@@ -62,7 +62,7 @@ const sessionStore = new MySQLStore({
     host: 'localhost',
     user: process.env.DB_USER,
     password: process.env.DB_PASS,
-    database: 'darwin1v1league',
+    database: '1v1league',
 })
 app.enable('trust proxy');
 app.use(cors());
@@ -86,13 +86,6 @@ var server = https.createServer(ServerOptions, app).listen(PORT, function () {
 });
 
 server.on('error', (err) => { console.log(err) })
-
-// connection.connect(function (err) {
-//     if (err) throw err;
-//     console.log("Connected!");
-// });
-
-
 
 function SELECT_PLAYERS(platform, region, season) {
     let playerData = !season || season > 2 ? PLAYER_DATA : PLAYER_DATA_OLD;
